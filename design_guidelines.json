@@ -1,0 +1,96 @@
+{
+  "theme": "Dark",
+  "archetype": "Performance Pro",
+  "colors": {
+    "background": "#0A0A0A",
+    "surface": "#1A1A1A",
+    "surfaceLight": "#2A2A2A",
+    "primary": "#FF3B30",
+    "primaryMuted": "rgba(255, 59, 48, 0.2)",
+    "secondary": "#007AFF",
+    "textPrimary": "#FFFFFF",
+    "textSecondary": "#A1A1AA",
+    "border": "#27272A",
+    "success": "#34C759",
+    "error": "#FF3B30",
+    "overlay": "rgba(0, 0, 0, 0.6)"
+  },
+  "typography": {
+    "headingFont": "Barlow Condensed",
+    "bodyFont": "Inter",
+    "sizes": {
+      "h1": 48,
+      "h2": 32,
+      "h3": 24,
+      "h4": 20,
+      "body": 16,
+      "caption": 12
+    },
+    "weights": {
+      "bold": "800",
+      "semibold": "600",
+      "normal": "400"
+    }
+  },
+  "spacing": {
+    "xs": 4,
+    "sm": 8,
+    "md": 16,
+    "lg": 24,
+    "xl": 32,
+    "xxl": 48
+  },
+  "layout": {
+    "borderRadius": {
+      "sm": 4,
+      "md": 8,
+      "lg": 16,
+      "xl": 24
+    },
+    "cardStyle": "Tactical Minimalism. 1px solid stroke (border) rather than soft shadows. High-saturation accent blocks for progress bars and primary actions."
+  },
+  "components": {
+    "heroStats": "Bento Grid layout. 1 dominant stat card (e.g., Total Workouts), smaller cards for Streaks and Today's Volume. Uses primary color accents.",
+    "muscleGroupCard": "Dark overlay gradient on background image, bottom-left aligned bold text, 1px border. Tap to enter category.",
+    "bottomSheet": "Used for logging sets/reps. Slides up smoothly with react-native-reanimated. Blurs background.",
+    "buttons": "Sharp edges (md border-radius), high contrast. Primary actions are solid #FF3B30 with white text.",
+    "charts": "Line charts for Max Weight, Bar charts for Volume. Use victory-native or react-native-chart-kit. Chart line should be #FF3B30 with a gradient fill below.",
+    "inputs": "Dark surface background with 1px border. Focus state turns border to #FF3B30."
+  },
+  "iconography": {
+    "library": "@expo/vector-icons",
+    "family": "Ionicons",
+    "style": "Sharp, clear, and unadorned. (e.g., barbell-outline, body-outline, stats-chart)"
+  },
+  "animations": {
+    "transitions": "React Navigation native stack default animations + custom reanimated shared element transitions if possible.",
+    "microInteractions": "Tap scale down (0.95) on cards and buttons. Smooth count-up animations for numbers (stats)."
+  },
+  "images": {
+    "hero": "https://images.unsplash.com/photo-1561570121-c8219daec12b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHxneW0lMjB3b3Jrb3V0JTIwZGFyayUyMGxpZ2h0aW5nfGVufDB8fHx8MTc3NjY5NDQ4OXww&ixlib=rb-4.1.0&q=85",
+    "categories": {
+      "chest": "https://images.unsplash.com/photo-1692372372344-41aed374b848?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxiZW5jaCUyMHByZXNzJTIwZHVtYmJlbGwlMjBneW18ZW58MHx8fHwxNzc2Njk0NDg5fDA&ixlib=rb-4.1.0&q=85",
+      "legs": "https://images.pexels.com/photos/11191173/pexels-photo-11191173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "back": "https://images.pexels.com/photos/7187945/pexels-photo-7187945.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "arms": "https://images.unsplash.com/photo-1758875570005-52f6fff50854?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHxwdWxsJTIwdXAlMjBjb3JlJTIwd29ya291dCUyMGd5bXxlbnwwfHx8fDE3NzY2OTQ0ODl8MA&ixlib=rb-4.1.0&q=85",
+      "shoulders": "https://images.unsplash.com/photo-1734630341082-0fec0e10126c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwyfHxneW0lMjB3b3Jrb3V0JTIwZGFyayUyMGxpZ2h0aW5nfGVufDB8fHx8MTc3NjY5NDQ4OXww&ixlib=rb-4.1.0&q=85",
+      "abs": "https://images.unsplash.com/photo-1765302741884-e846c7a178df?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwzfHxwdWxsJTIwdXAlMjBjb3JlJTIwd29ya291dCUyMGd5bXxlbnwwfHx8fDE3NzY2OTQ0ODl8MA&ixlib=rb-4.1.0&q=85"
+    }
+  },
+  "screens": {
+    "home": "Features the hero stats bento grid at the top, followed by a 2-column grid of the 6 muscle group cards. Each card uses the respective category image with a dark gradient overlay and bottom-left bold title.",
+    "categoryDetail": "A list view of up to 10 exercises. Shows exercise name and a small subtitle indicating 'Last logged: X days ago' or 'No logs yet'. Has a floating action button (FAB) to add a custom exercise.",
+    "exerciseDetail": "A scrollable page. Top section: Input form for today's workout (Set number, Reps, Weight). Middle section: Recent history list. Bottom section: Progress charts toggleable between Max Weight and Total Volume. Needs kg/lbs unit reflection based on settings.",
+    "settings": "Simple screen with toggle for Weight Unit (kg/lbs) and option to clear all local data. Includes Dark Theme UI details."
+  },
+  "instructions_to_main_agent": [
+    "Use React Native (Expo) and standard React Native elements (View, Text, StyleSheet) or styled-components/NativeWind. No web-specific UI components (like shadcn/ui).",
+    "Implement navigation using react-navigation/native and native-stack.",
+    "Use react-native-reanimated for gesture-driven features (e.g. swipe to delete set, bottom sheets).",
+    "For local storage, use @react-native-async-storage/async-storage for storing workouts, sets, and user settings without login.",
+    "Ensure all interactive elements have a `testID` attribute for automated testing.",
+    "Implement the UI with tactical minimalism: use pure #0A0A0A background, 1px #27272A borders, and #FF3B30 as the primary energetic accent. Avoid heavy box shadows; rely on borders for definition.",
+    "For cards with background images, apply a dark overlay (e.g., backgroundColor: 'rgba(0,0,0,0.5)') to ensure white text is strictly legible (APCA contrast).",
+    "Seed the app with the 6 categories (Shoulders, Legs, Chest, Arms, Back, Abs) and up to 10 standard exercises each on first launch if storage is empty."
+  ]
+}
