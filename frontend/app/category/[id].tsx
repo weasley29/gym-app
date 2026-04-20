@@ -174,7 +174,6 @@ export default function CategoryDetail() {
               placeholderTextColor={theme.colors.textSecondary}
               value={newName}
               onChangeText={setNewName}
-              autoFocus
             />
             <TouchableOpacity
               testID="custom-exercise-save-btn"
@@ -260,7 +259,8 @@ const styles = StyleSheet.create({
   modalBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.6)' },
   modalSheet: {
     backgroundColor: theme.colors.surface,
-    padding: theme.spacing.lg,
+    padding: theme.spacing.md,
+    paddingBottom: theme.spacing.lg,
     borderTopLeftRadius: theme.radius.xl,
     borderTopRightRadius: theme.radius.xl,
     borderWidth: 1,
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textSecondary,
     fontSize: 13,
     marginTop: 4,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   input: {
     borderWidth: 1,

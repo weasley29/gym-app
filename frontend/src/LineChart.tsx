@@ -84,7 +84,7 @@ export default function LineChart({ points, width, height, unit }: Props) {
           <Circle key={i} cx={c.x} cy={c.y} r={3.5} fill={theme.colors.primary} />
         ))}
       </Svg>
-      <View style={[styles.yLabels, { height, left: 0 }]} pointerEvents="none">
+      <View style={[styles.yLabels, { height, left: 0 }]}>
         {ticks.map((t, i) => (
           <Text
             key={i}

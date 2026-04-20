@@ -76,10 +76,16 @@ export default function ExerciseDetail() {
       return;
     }
     const weightKg = fromDisplay(w, settings.unit);
+    // Resolve category id: prefer explicit param, else for default ids
+    // which use format `{catId}:{name}` take the prefix.
+    const resolvedCat =
+      cat ||
+      (id && !id.startsWith('custom:') ? id.split(':')[0] : '') ||
+      '';
     const newSet: LoggedSet = {
       id: `set:${Date.now()}`,
       exerciseId: id!,
-      categoryId: cat || id!.split(':')[0] || '',
+      categoryId: resolvedCat,
       reps: r,
       weight: weightKg,
       date: new Date().toISOString(),
