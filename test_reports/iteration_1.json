@@ -1,0 +1,41 @@
+{
+  "summary": "Frontend-only Expo web preview testing of Iron Log fitness app. Home screen, 6 muscle category cards, category detail with 10 default exercises, FAB + custom exercise modal opening, exercise detail with reps/weight log form, PR badge, chart toggles, and navigation all load and render correctly with valid testIDs. Full end-to-end log+delete+unit-toggle verification was partially blocked because the modal save button scrolled outside the 390x844 viewport (modal sheet taller than visible area when inputs and KeyboardAvoidingView mount).",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "category/[id].tsx modal", "issue": "On 390x844 viewport, the 'ADD EXERCISE' (custom-exercise-save-btn) renders below the visible area after the input receives focus/autofocus; button is technically rendered but outside viewport. User may need to scroll the sheet to tap it. Consider reducing modalSheet padding or wrapping content in a ScrollView.", "testID": "custom-exercise-save-btn", "priority": "MEDIUM"},
+      {"component": "Home ImageBackground overlay", "issue": "overlay uses theme.colors.overlay which, combined with 140px card height, can make the muscle-group title slightly low contrast on lighter images (e.g. Legs). Consider a gradient overlay.", "testID": "category-card-legs", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "exercise/[id]", "issues": ["React Native Web warning: 'props.pointerEvents is deprecated. Use style.pointerEvents' emitted on exercise detail — not blocking but should be cleaned up in a child component (likely inside LineChart or Modal wrappers)."]}
+    ],
+    "react_native_issues": []
+  },
+  "verified_flows": [
+    "Home loads with Iron Log title, 3 stat cards, and all 6 category cards (chest, back, legs, shoulders, arms, abs)",
+    "Tapping chest card navigates to /category/chest and shows exactly 10 default exercises (exercise-row-chest:* count = 10)",
+    "FAB opens the custom exercise modal and custom-exercise-name-input accepts text",
+    "Exercise detail screen renders log-set-btn, reps-input, weight-input and weight label correctly shows '(kg)' with default settings",
+    "Chart mode toggle buttons (MAX WEIGHT / VOLUME) are present and tappable",
+    "Settings screen reachable via settings-btn; unit-kg and unit-lbs toggles render"
+  ],
+  "test_report_links": [],
+  "action_items": [
+    "Fix modal layout in category/[id].tsx so the custom-exercise-save-btn remains within the viewport on small devices (wrap modalSheet content in a ScrollView or reduce vertical spacing; currently the ADD EXERCISE button falls below 844px when keyboard placeholder + KeyboardAvoidingView expand the sheet).",
+    "Silence the 'props.pointerEvents is deprecated' RN Web warning (update any child using pointerEvents prop to style.pointerEvents).",
+    "Consider also verifying log-set, PR badge update, and kg→lbs unit propagation manually since automated verification was blocked by the modal click failing earlier in the script."
+  ],
+  "critical_code_review_comments": [
+    "storage.ts computeStreak() mutates the 'cursor' Date in a loop with an inner restart-branch; logic is correct but hard to read — consider extracting to a pure function with an index loop.",
+    "exercise/[id].tsx stores categoryId as cat || id!.split(':')[0] — for custom exercises id is 'custom:<cat>:<ts>' so split[0] would give 'custom', not the category. Luckily `cat` param is passed from category screen so it works, but the fallback is misleading and should be removed or fixed.",
+    "No handling if the exercise id param is an unknown/deleted custom id — screen will still render with empty data (acceptable for MVP)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A", "frontend": "~85%"},
+  "seed_data_creation": "None (AsyncStorage local only; test cleared localStorage to ensure fresh state)",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use viewport 390x844. Before clicking custom-exercise-save-btn, scroll inside the modal or close the on-screen keyboard. Alternatively, use page.evaluate to scrollIntoView the button. The set log → PR badge → delete → unit toggle flow still needs end-to-end automated verification once the modal layout issue is resolved.",
+  "rca_of_issue": "Modal sheet in category/[id].tsx uses KeyboardAvoidingView + fixed padding (spacing.lg=24px) and autoFocus on the TextInput. In Expo Web with a 390x844 viewport, the resulting modalSheet (title + sub + input + button + paddings) + bottom anchor can push the primary action slightly past the bottom edge when the focused input triggers a layout shift, causing Playwright's click to fail with 'Element is outside of the viewport'. Mitigation: wrap modalSheet children in a ScrollView or reduce padding."
+}
