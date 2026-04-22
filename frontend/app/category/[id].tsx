@@ -89,7 +89,7 @@ export default function CategoryDetail() {
 
   return (
     <View style={styles.safe}>
-      <Stack.Screen options={{ title: cat.name, headerBackTitle: 'Back' }} />
+      <Stack.Screen options={{ title: cat.name }} />
       <ImageBackground source={{ uri: cat.image }} style={styles.hero}>
         <View style={styles.heroOverlay}>
           <Text style={styles.heroEyebrow}>MUSCLE GROUP</Text>
