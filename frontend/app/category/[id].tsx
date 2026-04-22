@@ -9,11 +9,10 @@ import {
   Modal,
   KeyboardAvoidingView,
   Platform,
-  ImageBackground,
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   addCustomExercise,
@@ -90,13 +89,16 @@ export default function CategoryDetail() {
   return (
     <View style={styles.safe}>
       <Stack.Screen options={{ title: cat.name }} />
-      <ImageBackground source={{ uri: cat.image }} style={styles.hero}>
-        <View style={styles.heroOverlay}>
-          <Text style={styles.heroEyebrow}>MUSCLE GROUP</Text>
+      <View style={[styles.hero, { backgroundColor: cat.bgColor, borderBottomColor: cat.color + '44' }]}>
+        <View style={[styles.heroIconWrap, { backgroundColor: cat.color + '22' }]}>
+          <MaterialCommunityIcons name={cat.icon as any} size={48} color={cat.color} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.heroEyebrow, { color: cat.color }]}>MUSCLE GROUP</Text>
           <Text style={styles.heroTitle}>{cat.name.toUpperCase()}</Text>
           <Text style={styles.heroFoot}>{exercises.length} exercises</Text>
         </View>
-      </ImageBackground>
+      </View>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -192,22 +194,28 @@ export default function CategoryDetail() {
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: theme.colors.background },
   title: { color: theme.colors.textPrimary },
-  hero: { height: 150, justifyContent: 'flex-end' },
-  heroOverlay: {
-    backgroundColor: theme.colors.overlay,
+  hero: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: theme.spacing.md,
-    flex: 1,
-    justifyContent: 'flex-end',
+    borderBottomWidth: 1,
+    gap: theme.spacing.md,
+  },
+  heroIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   heroEyebrow: {
-    color: theme.colors.primary,
     fontSize: 11,
     letterSpacing: 2,
     fontWeight: '800',
   },
   heroTitle: {
     color: theme.colors.textPrimary,
-    fontSize: 32,
+    fontSize: 26,
     fontWeight: '900',
     letterSpacing: -0.5,
     marginTop: 2,

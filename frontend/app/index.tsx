@@ -5,11 +5,10 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  ImageBackground,
-  Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import {
   computeStreak,
@@ -24,12 +23,12 @@ import {
 import { CATEGORIES } from '../src/seedData';
 import { theme } from '../src/theme';
 
-const { width: SCREEN_W } = Dimensions.get('window');
 const GAP = theme.spacing.md;
-const CARD_W = (SCREEN_W - theme.spacing.md * 2 - GAP) / 2;
 
 export default function Home() {
   const router = useRouter();
+  const { width: screenW } = useWindowDimensions();
+  const cardW = Math.floor((screenW - theme.spacing.md * 2 - GAP) / 2);
   const [sets, setSets] = useState<LoggedSet[]>([]);
   const [settings, setSettings] = useState<Settings>({ unit: 'kg' });
 
@@ -54,7 +53,7 @@ export default function Home() {
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.eyebrow}>READY TO TRAIN</Text>
-            <Text style={styles.title}>Iron Log</Text>
+            <Text style={styles.title}>Gym Log</Text>
           </View>
           <TouchableOpacity
             testID="settings-btn"
@@ -96,22 +95,24 @@ export default function Home() {
             <TouchableOpacity
               key={cat.id}
               testID={`category-card-${cat.id}`}
-              style={[styles.card, { width: CARD_W }]}
+              style={[
+                styles.card,
+                { width: cardW, backgroundColor: cat.bgColor, borderColor: cat.color + '55' },
+              ]}
               activeOpacity={0.85}
               onPress={() => router.push(`/category/${cat.id}`)}
             >
-              <ImageBackground
-                source={{ uri: cat.image }}
-                style={styles.cardImg}
-                imageStyle={{ borderRadius: theme.radius.lg }}
-              >
-                <View style={styles.cardOverlay}>
-                  <View style={styles.cardIconWrap}>
-                    <Ionicons name={cat.icon as any} size={16} color={theme.colors.primary} />
-                  </View>
-                  <Text style={styles.cardTitle}>{cat.name.toUpperCase()}</Text>
+              <View style={styles.cardIconOuter}>
+                <View style={[styles.cardIconInner, { backgroundColor: cat.color + '22' }]}>
+                  <MaterialCommunityIcons
+                    name={cat.icon as any}
+                    size={52}
+                    color={cat.color}
+                  />
                 </View>
-              </ImageBackground>
+              </View>
+              <Text style={styles.cardTitle}>{cat.name.toUpperCase()}</Text>
+              <View style={[styles.cardAccent, { backgroundColor: cat.color }]} />
             </TouchableOpacity>
           ))}
         </View>
@@ -209,32 +210,37 @@ const styles = StyleSheet.create({
     gap: GAP,
   },
   card: {
-    height: 140,
+    height: 160,
     borderRadius: theme.radius.lg,
-    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  cardImg: { flex: 1, justifyContent: 'flex-end' },
-  cardOverlay: {
-    backgroundColor: theme.colors.overlay,
     padding: theme.spacing.md,
-    flex: 1,
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    overflow: 'hidden',
   },
-  cardIconWrap: {
-    alignSelf: 'flex-start',
-    width: 30,
-    height: 30,
-    borderRadius: theme.radius.sm,
-    backgroundColor: theme.colors.primaryMuted,
+  cardIconOuter: {
+    width: '100%',
+    alignItems: 'center',
+    marginTop: theme.spacing.xs,
+  },
+  cardIconInner: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cardTitle: {
     color: theme.colors.textPrimary,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 0.5,
+    letterSpacing: 1,
+  },
+  cardAccent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 3,
   },
 });

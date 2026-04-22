@@ -92,7 +92,7 @@ export default function SettingsScreen() {
         <Text style={styles.sectionTitle}>ABOUT</Text>
         <View style={styles.card}>
           <View style={styles.aboutRow}>
-            <Text style={styles.aboutLabel}>Iron Log</Text>
+            <Text style={styles.aboutLabel}>Gym Log</Text>
             <Text style={styles.aboutValue}>v1.0</Text>
           </View>
           <Text style={styles.aboutSub}>

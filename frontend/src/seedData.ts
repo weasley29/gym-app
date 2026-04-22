@@ -1,7 +1,9 @@
 export type Category = {
   id: string;
   name: string;
-  image: string;
+  color: string;
+  bgColor: string;
+  iconLib: 'Ionicons' | 'MaterialCommunityIcons';
   icon: string;
 };
 
@@ -9,44 +11,50 @@ export const CATEGORIES: Category[] = [
   {
     id: 'chest',
     name: 'Chest',
-    image:
-      'https://images.unsplash.com/photo-1692372372344-41aed374b848?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxODh8MHwxfHNlYXJjaHwyfHxiZW5jaCUyMHByZXNzJTIwZHVtYmJlbGwlMjBneW18ZW58MHx8fHwxNzc2Njk0NDg5fDA&ixlib=rb-4.1.0&q=85',
-    icon: 'fitness',
+    color: '#FF3B30',
+    bgColor: '#3A1515',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'dumbbell',
   },
   {
     id: 'back',
     name: 'Back',
-    image:
-      'https://images.pexels.com/photos/7187945/pexels-photo-7187945.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
-    icon: 'body',
+    color: '#007AFF',
+    bgColor: '#102740',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'human-handsdown',
   },
   {
     id: 'legs',
     name: 'Legs',
-    image:
-      'https://images.pexels.com/photos/11191173/pexels-photo-11191173.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940',
-    icon: 'walk',
+    color: '#34C759',
+    bgColor: '#12301B',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'run-fast',
   },
   {
     id: 'shoulders',
     name: 'Shoulders',
-    image:
-      'https://images.unsplash.com/photo-1734630341082-0fec0e10126c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwyfHxneW0lMjB3b3Jrb3V0JTIwZGFyayUyMGxpZ2h0aW5nfGVufDB8fHx8MTc3NjY5NDQ4OXww&ixlib=rb-4.1.0&q=85',
-    icon: 'barbell',
+    color: '#FF9500',
+    bgColor: '#3A2410',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'weight-lifter',
   },
   {
     id: 'arms',
     name: 'Arms',
-    image:
-      'https://images.unsplash.com/photo-1758875570005-52f6fff50854?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwxfHxwdWxsJTIwdXAlMjBjb3JlJTIwd29ya291dCUyMGd5bXxlbnwwfHx8fDE3NzY2OTQ0ODl8MA&ixlib=rb-4.1.0&q=85',
-    icon: 'hand-left',
+    color: '#AF52DE',
+    bgColor: '#2B1838',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'arm-flex',
   },
   {
     id: 'abs',
     name: 'Abs',
-    image:
-      'https://images.unsplash.com/photo-1765302741884-e846c7a178df?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzN8MHwxfHNlYXJjaHwzfHxwdWxsJTIwdXAlMjBjb3JlJTIwd29ya291dCUyMGd5bXxlbnwwfHx8fDE3NzY2OTQ0ODl8MA&ixlib=rb-4.1.0&q=85',
-    icon: 'flame',
+    color: '#FFCC00',
+    bgColor: '#2E2810',
+    iconLib: 'MaterialCommunityIcons',
+    icon: 'fire',
   },
 ];
 
