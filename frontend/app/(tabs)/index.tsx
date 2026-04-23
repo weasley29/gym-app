@@ -19,9 +19,9 @@ import {
   toDisplay,
   todaysVolumeKg,
   totalWorkoutDays,
-} from '../src/storage';
-import { CATEGORIES } from '../src/seedData';
-import { theme } from '../src/theme';
+} from '../../src/storage';
+import { CATEGORIES } from '../../src/seedData';
+import { theme } from '../../src/theme';
 
 const GAP = theme.spacing.md;
 
@@ -55,14 +55,6 @@ export default function Home() {
             <Text style={styles.eyebrow}>READY TO TRAIN</Text>
             <Text style={styles.title}>Gym Log</Text>
           </View>
-          <TouchableOpacity
-            testID="settings-btn"
-            style={styles.iconBtn}
-            onPress={() => router.push('/settings')}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="settings-outline" size={22} color={theme.colors.textPrimary} />
-          </TouchableOpacity>
         </View>
 
         {/* Bento Stats */}

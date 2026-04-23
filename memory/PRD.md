@@ -1,27 +1,38 @@
-# Iron Log — Fitness Tracker (PRD)
+# Gym Log — Fitness Tracker (PRD)
 
 ## Summary
-A local-first fitness tracker for Expo React Native. 6 muscle groups × up to 10 exercises, reps + weight logging, progress charts, no login.
+Local-first Expo React Native fitness tracker. 6 muscle groups × 10+ exercises, reps/weight/notes logging, muscle diagram visualization, rest timer, calendar history, and insights.
 
-## Core Features
-- **Home**: Bento stats (total workout days, streak, today's volume), 6 muscle-group cards.
-- **Category Detail**: List of pre-seeded + custom exercises with last-logged indicator; FAB to add custom exercise.
-- **Exercise Detail**: Log reps + weight, today's sets (with delete), progress charts toggle (Max Weight / Volume), per-day history.
-- **Settings**: kg/lbs toggle, clear all data.
+## Navigation
+Bottom-tab layout with 4 primary screens:
+- **Home** — muscle-group grid + quick stats
+- **History** — month calendar with per-day sets + delete
+- **Insights** — weekly muscle heatmap + undertrained-muscle alerts
+- **Settings** — unit, body type, rest timer, clear data
 
-## Storage
-All data stored locally via AsyncStorage. Weights always stored in kg, converted only for display.
+Stack routes (above tabs): `category/[id]`, `exercise/[id]`.
+
+## Key Features (v1.1)
+- Pre-seeded exercises with `primary` + `secondary` muscle tags and description/form tips
+- Custom exercises (long-press to delete)
+- Optional notes per logged set
+- Rest timer: presets 45s / 60s / 2m / 5m + custom, optional auto-start
+- Haptic feedback via `expo-haptics` + `Vibration` on timer end
+- Female/male body-diagram toggle (female default) with SVG silhouette
+- Muscle diagram highlights primary (red) + secondary (orange), front/back view toggle
+- Calendar history with tap-to-view sets + delete
+- Insights: weekly muscle volume heatmap, 7-day window, alerts for muscles not trained in 5+ days
+- Dark premium theme, bottom tabs
+
+## Data model
+```ts
+LoggedSet { id, exerciseId, exerciseName?, categoryId, reps, weight (kg), notes?, date }
+Settings  { unit, bodyType, restTimerEnabled, restTimerSeconds }
+ExerciseMeta { name, primary[], secondary[], description, tips }
+```
 
 ## Tech
-- Expo Router (file-based routing)
-- react-native-svg (custom line chart)
-- @react-native-async-storage/async-storage
-- @expo/vector-icons (Ionicons)
+Expo SDK 54, expo-router (tabs + stack), react-native-svg (LineChart + MuscleDiagram), @react-native-async-storage/async-storage, expo-haptics.
 
-## Seeded Exercises
-- **Chest**: Barbell Bench Press, Incline Dumbbell Press, Decline Bench Press, Dumbbell Flyes, Cable Crossover, Push-Ups, Chest Dips, Machine Chest Press, Pec Deck Machine, Svend Press
-- **Back**: Deadlift, Pull-Ups, Barbell Row, Lat Pulldown, Seated Cable Row, T-Bar Row, Single-Arm Dumbbell Row, Face Pull, Shrugs, Hyperextension
-- **Legs**: Back Squat, Front Squat, Romanian Deadlift, Leg Press, Walking Lunges, Bulgarian Split Squat, Leg Extension, Leg Curl, Calf Raise, Hip Thrust
-- **Shoulders**: Overhead Press, Dumbbell Shoulder Press, Lateral Raise, Front Raise, Rear Delt Fly, Arnold Press, Upright Row, Cable Lateral Raise, Face Pull, Push Press
-- **Arms**: Barbell Curl, Dumbbell Curl, Hammer Curl, Preacher Curl, Concentration Curl, Tricep Pushdown, Skull Crushers, Overhead Tricep Extension, Close-Grip Bench Press, Dips
-- **Abs**: Plank, Crunches, Hanging Leg Raise, Russian Twist, Bicycle Crunch, Cable Crunch, Mountain Climbers, V-Ups, Ab Wheel Rollout, Side Plank
+## Status
+Local-first, ready for EAS APK build. Expo-doctor 17/17 ✓.

@@ -16,12 +16,14 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import {
   addCustomExercise,
+  deleteCustomExercise,
   getAllSets,
   getExercisesForCategory,
   LoggedSet,
 } from '../../src/storage';
 import { CATEGORIES } from '../../src/seedData';
 import { theme } from '../../src/theme';
+import { tap, warn } from '../../src/haptics';
 
 export default function CategoryDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -111,12 +113,32 @@ export default function CategoryDetail() {
             testID={`exercise-row-${ex.id}`}
             style={styles.row}
             activeOpacity={0.8}
-            onPress={() =>
+            onLongPress={() => {
+              if (!ex.custom) return;
+              warn();
+              Alert.alert(
+                'Delete custom exercise?',
+                `Remove "${ex.name}" and all its logged sets? This cannot be undone.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await deleteCustomExercise(ex.id);
+                      load();
+                    },
+                  },
+                ]
+              );
+            }}
+            onPress={() => {
+              tap();
               router.push({
                 pathname: '/exercise/[id]',
                 params: { id: ex.id, name: ex.name, cat: cat.id },
-              })
-            }
+              });
+            }}
           >
             <View style={styles.rowLeft}>
               <View style={styles.rowIconWrap}>
@@ -126,7 +148,7 @@ export default function CategoryDetail() {
                 <Text style={styles.rowName}>{ex.name}</Text>
                 <Text style={styles.rowSub}>
                   {lastLoggedText(ex.id)}
-                  {ex.custom ? ' · Custom' : ''}
+                  {ex.custom ? ' · Custom (long-press to delete)' : ''}
                 </Text>
               </View>
             </View>

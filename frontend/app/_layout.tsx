@@ -19,10 +19,9 @@ export default function RootLayout() {
           headerLeft: () => <BackButton />,
         }}
       >
-        <Stack.Screen name="index" options={{ headerShown: false, headerLeft: undefined }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, headerLeft: undefined }} />
         <Stack.Screen name="category/[id]" options={{ title: 'Category' }} />
         <Stack.Screen name="exercise/[id]" options={{ title: 'Exercise' }} />
-        <Stack.Screen name="settings" options={{ title: 'Settings' }} />
       </Stack>
     </GestureHandlerRootView>
   );

@@ -17,6 +17,7 @@ import { useFocusEffect, useLocalSearchParams, Stack } from 'expo-router';
 import {
   addSet,
   deleteSet,
+  findExerciseById,
   fromDisplay,
   getAllSets,
   getSettings,
@@ -24,9 +25,15 @@ import {
   sameDay,
   Settings,
   toDisplay,
+  ExerciseRow,
+  DEFAULT_SETTINGS,
 } from '../../src/storage';
+import { MuscleId } from '../../src/muscles';
 import { theme } from '../../src/theme';
 import LineChart from '../../src/LineChart';
+import MuscleDiagram from '../../src/MuscleDiagram';
+import RestTimer from '../../src/RestTimer';
+import { success, tap } from '../../src/haptics';
 
 export default function ExerciseDetail() {
   const { id, name, cat } = useLocalSearchParams<{
@@ -35,16 +42,28 @@ export default function ExerciseDetail() {
     cat?: string;
   }>();
   const [sets, setSets] = useState<LoggedSet[]>([]);
-  const [settings, setSettings] = useState<Settings>({ unit: 'kg' });
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [exInfo, setExInfo] = useState<ExerciseRow | null>(null);
   const [reps, setReps] = useState('');
   const [weight, setWeight] = useState('');
+  const [notes, setNotes] = useState('');
+  const [showNotes, setShowNotes] = useState(false);
   const [chartMode, setChartMode] = useState<'max' | 'volume'>('max');
+  const [showMuscles, setShowMuscles] = useState(false);
+  const [muscleView, setMuscleView] = useState<'front' | 'back'>('front');
+  const [restKey, setRestKey] = useState<number>(0);
 
   const load = useCallback(async () => {
-    const [all, s] = await Promise.all([getAllSets(), getSettings()]);
+    if (!id) return;
+    const [all, s, info] = await Promise.all([
+      getAllSets(),
+      getSettings(),
+      findExerciseById(id),
+    ]);
     setSets(all);
     setSettings(s);
-  }, []);
+    setExInfo(info);
+  }, [id]);
 
   useFocusEffect(
     useCallback(() => {
@@ -75,9 +94,8 @@ export default function ExerciseDetail() {
       Alert.alert('Invalid weight', 'Enter a valid weight (0 or greater).');
       return;
     }
+    tap();
     const weightKg = fromDisplay(w, settings.unit);
-    // Resolve category id: prefer explicit param, else for default ids
-    // which use format `{catId}:{name}` take the prefix.
     const resolvedCat =
       cat ||
       (id && !id.startsWith('custom:') ? id.split(':')[0] : '') ||
@@ -85,14 +103,23 @@ export default function ExerciseDetail() {
     const newSet: LoggedSet = {
       id: `set:${Date.now()}`,
       exerciseId: id!,
+      exerciseName: exInfo?.name || (name as string) || id,
       categoryId: resolvedCat,
       reps: r,
       weight: weightKg,
+      notes: notes.trim() || undefined,
       date: new Date().toISOString(),
     };
     await addSet(newSet);
+    success();
     setReps('');
     setWeight('');
+    setNotes('');
+    setShowNotes(false);
+    // Auto-start rest timer if enabled
+    if (settings.restTimerEnabled && settings.restTimerSeconds > 0) {
+      setRestKey(Date.now());
+    }
     load();
   };
 
@@ -110,18 +137,11 @@ export default function ExerciseDetail() {
     ]);
   };
 
-  // Group by day for history & charts
   const dayMap = useMemo(() => {
-    const map = new Map<
-      string,
-      { dayKey: string; date: Date; sets: LoggedSet[] }
-    >();
+    const map = new Map<string, { dayKey: string; date: Date; sets: LoggedSet[] }>();
     mySets.forEach((s) => {
       const d = new Date(s.date);
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-        2,
-        '0'
-      )}-${String(d.getDate()).padStart(2, '0')}`;
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       if (!map.has(key)) map.set(key, { dayKey: key, date: d, sets: [] });
       map.get(key)!.sets.push(s);
     });
@@ -129,10 +149,7 @@ export default function ExerciseDetail() {
   }, [mySets]);
 
   const sortedDays = useMemo(
-    () =>
-      Array.from(dayMap.values()).sort(
-        (a, b) => a.date.getTime() - b.date.getTime()
-      ),
+    () => Array.from(dayMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime()),
     [dayMap]
   );
 
@@ -149,8 +166,9 @@ export default function ExerciseDetail() {
   }, [sortedDays, chartMode, settings.unit]);
 
   const chartWidth = Dimensions.get('window').width - theme.spacing.md * 2;
-
-  const exerciseName = (name as string) || 'Exercise';
+  const exerciseName = exInfo?.name || (name as string) || 'Exercise';
+  const primary: MuscleId[] = (exInfo?.primary || []) as MuscleId[];
+  const secondary: MuscleId[] = (exInfo?.secondary || []) as MuscleId[];
 
   return (
     <KeyboardAvoidingView
@@ -204,6 +222,34 @@ export default function ExerciseDetail() {
                 />
               </View>
             </View>
+
+            {showNotes ? (
+              <View style={{ marginBottom: theme.spacing.md }}>
+                <Text style={styles.inputLabel}>NOTES</Text>
+                <TextInput
+                  testID="notes-input"
+                  style={[styles.input, { fontSize: 14, minHeight: 60 }]}
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="How did it feel? Form cues, RPE, etc."
+                  placeholderTextColor={theme.colors.textSecondary}
+                  multiline
+                />
+              </View>
+            ) : (
+              <TouchableOpacity
+                testID="add-notes-btn"
+                onPress={() => {
+                  tap();
+                  setShowNotes(true);
+                }}
+                style={styles.addNotesBtn}
+              >
+                <Ionicons name="add" size={14} color={theme.colors.textSecondary} />
+                <Text style={styles.addNotesText}>Add note (optional)</Text>
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity
               testID="log-set-btn"
               style={styles.primaryBtn}
@@ -215,22 +261,28 @@ export default function ExerciseDetail() {
             </TouchableOpacity>
           </View>
 
+          {/* Rest timer */}
+          {settings.restTimerEnabled && (
+            <RestTimer
+              durationSec={settings.restTimerSeconds}
+              autoStartKey={restKey || undefined}
+            />
+          )}
+
           {/* Today's sets */}
           <Text style={styles.sectionTitle}>TODAY</Text>
           {todaySets.length === 0 ? (
             <Text style={styles.emptyText}>No sets logged today yet.</Text>
           ) : (
             todaySets.map((s, i) => (
-              <View
-                key={s.id}
-                style={styles.setRow}
-                testID={`today-set-${i}`}
-              >
+              <View key={s.id} style={styles.setRow} testID={`today-set-${i}`}>
                 <Text style={styles.setIndex}>SET {todaySets.length - i}</Text>
-                <Text style={styles.setValue}>
-                  {s.reps} × {toDisplay(s.weight, settings.unit).toFixed(1)}{' '}
-                  {settings.unit}
-                </Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.setValue}>
+                    {s.reps} × {toDisplay(s.weight, settings.unit).toFixed(1)} {settings.unit}
+                  </Text>
+                  {s.notes ? <Text style={styles.setNotes}>“{s.notes}”</Text> : null}
+                </View>
                 <TouchableOpacity
                   testID={`delete-set-${s.id}`}
                   onPress={() => handleDelete(s.id)}
@@ -242,19 +294,99 @@ export default function ExerciseDetail() {
             ))
           )}
 
+          {/* Muscle & tips toggle */}
+          <TouchableOpacity
+            testID="muscle-toggle-btn"
+            onPress={() => {
+              tap();
+              setShowMuscles((v) => !v);
+            }}
+            style={styles.expandBtn}
+          >
+            <Ionicons
+              name={showMuscles ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={theme.colors.textPrimary}
+            />
+            <Text style={styles.expandText}>
+              {showMuscles ? 'Hide muscles & tips' : 'Show muscles & tips'}
+            </Text>
+          </TouchableOpacity>
+
+          {showMuscles && (
+            <View style={styles.diagramCard}>
+              <View style={styles.viewToggle}>
+                <TouchableOpacity
+                  testID="muscle-view-front"
+                  style={[styles.viewPill, muscleView === 'front' && styles.viewPillActive]}
+                  onPress={() => {
+                    tap();
+                    setMuscleView('front');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.viewPillText,
+                      muscleView === 'front' && styles.viewPillTextActive,
+                    ]}
+                  >
+                    FRONT
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  testID="muscle-view-back"
+                  style={[styles.viewPill, muscleView === 'back' && styles.viewPillActive]}
+                  onPress={() => {
+                    tap();
+                    setMuscleView('back');
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.viewPillText,
+                      muscleView === 'back' && styles.viewPillTextActive,
+                    ]}
+                  >
+                    BACK
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <MuscleDiagram
+                view={muscleView}
+                bodyType={settings.bodyType}
+                primary={primary}
+                secondary={secondary}
+                width={240}
+                height={440}
+              />
+              {exInfo?.description ? (
+                <>
+                  <Text style={styles.infoLabel}>DESCRIPTION</Text>
+                  <Text style={styles.infoText}>{exInfo.description}</Text>
+                </>
+              ) : null}
+              {exInfo?.tips ? (
+                <>
+                  <Text style={styles.infoLabel}>FORM TIPS</Text>
+                  <Text style={styles.infoText}>{exInfo.tips}</Text>
+                </>
+              ) : null}
+            </View>
+          )}
+
           {/* Chart */}
           <Text style={styles.sectionTitle}>PROGRESS</Text>
           <View style={styles.toggleRow}>
             <TouchableOpacity
               testID="chart-mode-max"
               style={[styles.toggle, chartMode === 'max' && styles.toggleActive]}
-              onPress={() => setChartMode('max')}
+              onPress={() => {
+                tap();
+                setChartMode('max');
+              }}
             >
               <Text
-                style={[
-                  styles.toggleText,
-                  chartMode === 'max' && styles.toggleTextActive,
-                ]}
+                style={[styles.toggleText, chartMode === 'max' && styles.toggleTextActive]}
               >
                 MAX WEIGHT
               </Text>
@@ -262,13 +394,13 @@ export default function ExerciseDetail() {
             <TouchableOpacity
               testID="chart-mode-volume"
               style={[styles.toggle, chartMode === 'volume' && styles.toggleActive]}
-              onPress={() => setChartMode('volume')}
+              onPress={() => {
+                tap();
+                setChartMode('volume');
+              }}
             >
               <Text
-                style={[
-                  styles.toggleText,
-                  chartMode === 'volume' && styles.toggleTextActive,
-                ]}
+                style={[styles.toggleText, chartMode === 'volume' && styles.toggleTextActive]}
               >
                 VOLUME
               </Text>
@@ -293,11 +425,7 @@ export default function ExerciseDetail() {
               .filter((d) => !sameDay(d.date, new Date()))
               .sort((a, b) => b.date.getTime() - a.date.getTime())
               .map((d) => (
-                <View
-                  key={d.dayKey}
-                  style={styles.historyCard}
-                  testID={`history-day-${d.dayKey}`}
-                >
+                <View key={d.dayKey} style={styles.historyCard} testID={`history-day-${d.dayKey}`}>
                   <View style={styles.historyHeader}>
                     <Text style={styles.historyDate}>
                       {d.date.toLocaleDateString(undefined, {
@@ -310,10 +438,10 @@ export default function ExerciseDetail() {
                       {d.sets.length} set{d.sets.length > 1 ? 's' : ''}
                     </Text>
                   </View>
-                  {d.sets.map((s, i) => (
+                  {d.sets.map((s) => (
                     <Text key={s.id} style={styles.historySet}>
-                      · {s.reps} × {toDisplay(s.weight, settings.unit).toFixed(1)}{' '}
-                      {settings.unit}
+                      · {s.reps} × {toDisplay(s.weight, settings.unit).toFixed(1)} {settings.unit}
+                      {s.notes ? ` — ${s.notes}` : ''}
                     </Text>
                   ))}
                 </View>
@@ -361,7 +489,7 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     borderRadius: theme.radius.lg,
     padding: theme.spacing.md,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.md,
   },
   inputRow: { flexDirection: 'row', gap: theme.spacing.md, marginBottom: theme.spacing.md },
   inputWrap: { flex: 1 },
@@ -382,6 +510,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     backgroundColor: theme.colors.background,
   },
+  addNotesBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    marginBottom: theme.spacing.md,
+  },
+  addNotesText: { color: theme.colors.textSecondary, fontSize: 13 },
   primaryBtn: {
     backgroundColor: theme.colors.primary,
     padding: theme.spacing.md,
@@ -400,11 +536,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     marginBottom: theme.spacing.md,
   },
-  emptyText: {
-    color: theme.colors.textSecondary,
-    fontSize: 13,
-    fontStyle: 'italic',
-  },
+  emptyText: { color: theme.colors.textSecondary, fontSize: 13, fontStyle: 'italic' },
   setRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -414,27 +546,67 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md,
     backgroundColor: theme.colors.surface,
     marginBottom: theme.spacing.sm,
-    justifyContent: 'space-between',
   },
   setIndex: {
     color: theme.colors.textSecondary,
     fontSize: 11,
     letterSpacing: 1.5,
     fontWeight: '700',
-    width: 70,
+    width: 60,
   },
-  setValue: {
-    color: theme.colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-  },
+  setValue: { color: theme.colors.textPrimary, fontSize: 15, fontWeight: '700' },
+  setNotes: { color: theme.colors.textSecondary, fontSize: 12, fontStyle: 'italic', marginTop: 2 },
   delBtn: { padding: 6 },
-  toggleRow: {
+  expandBtn: {
     flexDirection: 'row',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    padding: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    marginTop: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
   },
+  expandText: { color: theme.colors.textPrimary, fontWeight: '700', fontSize: 13 },
+  diagramCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    marginTop: theme.spacing.sm,
+    alignItems: 'center',
+  },
+  viewToggle: { flexDirection: 'row', gap: 8, marginBottom: theme.spacing.md },
+  viewPill: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+  },
+  viewPillActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  viewPillText: { color: theme.colors.textPrimary, fontWeight: '800', fontSize: 11, letterSpacing: 1 },
+  viewPillTextActive: { color: '#fff' },
+  infoLabel: {
+    alignSelf: 'flex-start',
+    color: theme.colors.textSecondary,
+    fontSize: 11,
+    letterSpacing: 1.5,
+    fontWeight: '700',
+    marginTop: theme.spacing.md,
+  },
+  infoText: {
+    alignSelf: 'stretch',
+    color: theme.colors.textPrimary,
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: 4,
+  },
+  toggleRow: { flexDirection: 'row', gap: theme.spacing.sm, marginBottom: theme.spacing.md },
   toggle: {
     flex: 1,
     paddingVertical: 10,
@@ -444,16 +616,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.surface,
   },
-  toggleActive: {
-    backgroundColor: theme.colors.primary,
-    borderColor: theme.colors.primary,
-  },
-  toggleText: {
-    color: theme.colors.textSecondary,
-    fontWeight: '800',
-    letterSpacing: 1,
-    fontSize: 11,
-  },
+  toggleActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  toggleText: { color: theme.colors.textSecondary, fontWeight: '800', letterSpacing: 1, fontSize: 11 },
   toggleTextActive: { color: '#fff' },
   chartCard: {
     backgroundColor: theme.colors.surface,
@@ -470,11 +634,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.surface,
     marginBottom: theme.spacing.sm,
   },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
   historyDate: { color: theme.colors.textPrimary, fontWeight: '800', fontSize: 14 },
   historyCount: { color: theme.colors.textSecondary, fontSize: 12 },
   historySet: { color: theme.colors.textSecondary, fontSize: 13, marginTop: 2 },
