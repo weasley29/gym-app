@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from 'expo-router';
@@ -9,6 +9,7 @@ import {
   LoggedSet,
   lastTrainedDayForMuscle,
   muscleVolumeLastDays,
+  musclesTrained,
   Settings,
   toDisplay,
   todaysVolumeKg,
@@ -17,12 +18,17 @@ import {
 } from '../../src/storage';
 import { MUSCLE_IDS, MUSCLE_LABELS, MuscleId } from '../../src/muscles';
 import { theme } from '../../src/theme';
+import MuscleDiagram from '../../src/MuscleDiagram';
+import { tap } from '../../src/haptics';
 
 export default function InsightsScreen() {
   const [sets, setSets] = useState<LoggedSet[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [volMap, setVolMap] = useState<Record<MuscleId, number>>({} as any);
   const [stale, setStale] = useState<{ muscle: MuscleId; days: number }[]>([]);
+  const [weekPrimary, setWeekPrimary] = useState<MuscleId[]>([]);
+  const [weekSecondary, setWeekSecondary] = useState<MuscleId[]>([]);
+  const [diagramView, setDiagramView] = useState<'front' | 'back'>('front');
 
   const compute = useCallback(async () => {
     const [s, st] = await Promise.all([getAllSets(), getSettings()]);
@@ -30,6 +36,14 @@ export default function InsightsScreen() {
     setSettings(st);
     const v = await muscleVolumeLastDays(s, 7);
     setVolMap(v);
+
+    // week muscles trained (last 7 days)
+    const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const weekSets = s.filter((x) => new Date(x.date).getTime() >= cutoff);
+    const { primary, secondary } = await musclesTrained(weekSets);
+    setWeekPrimary(primary);
+    setWeekSecondary(secondary);
+
     // compute stale per-muscle
     const results: { muscle: MuscleId; days: number }[] = [];
     for (const m of MUSCLE_IDS) {
@@ -76,6 +90,58 @@ export default function InsightsScreen() {
             <Text style={styles.statValue}>{Math.round(todayVol)}</Text>
             <Text style={styles.statLabel}>{settings?.unit || 'kg'} today</Text>
           </View>
+        </View>
+
+        {/* Weekly muscle diagram */}
+        <Text style={styles.sectionTitle}>WEEK AT A GLANCE</Text>
+        <View style={styles.diagramCard}>
+          <View style={styles.viewToggle}>
+            <TouchableOpacity
+              testID="insights-view-front"
+              style={[styles.viewPill, diagramView === 'front' && styles.viewPillActive]}
+              onPress={() => {
+                tap();
+                setDiagramView('front');
+              }}
+            >
+              <Text
+                style={[
+                  styles.viewPillText,
+                  diagramView === 'front' && styles.viewPillTextActive,
+                ]}
+              >
+                FRONT
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              testID="insights-view-back"
+              style={[styles.viewPill, diagramView === 'back' && styles.viewPillActive]}
+              onPress={() => {
+                tap();
+                setDiagramView('back');
+              }}
+            >
+              <Text
+                style={[
+                  styles.viewPillText,
+                  diagramView === 'back' && styles.viewPillTextActive,
+                ]}
+              >
+                BACK
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <MuscleDiagram
+            view={diagramView}
+            bodyType={settings?.bodyType || 'female'}
+            primary={weekPrimary}
+            secondary={weekSecondary}
+            width={220}
+            height={420}
+          />
+          {weekPrimary.length === 0 && weekSecondary.length === 0 ? (
+            <Text style={styles.emptyDiagram}>Log a workout to see your weekly heatmap.</Text>
+          ) : null}
         </View>
 
         {/* Muscle Heatmap */}
@@ -195,4 +261,31 @@ const styles = StyleSheet.create({
   warnText: { color: theme.colors.textPrimary, fontSize: 13, flex: 1 },
   warnBold: { fontWeight: '900', color: theme.colors.primary },
   suggestionText: { color: theme.colors.textPrimary, fontSize: 13, flex: 1 },
+  diagramCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  viewToggle: { flexDirection: 'row', gap: 8, marginBottom: theme.spacing.md },
+  viewPill: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+  },
+  viewPillActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  viewPillText: { color: theme.colors.textPrimary, fontWeight: '800', fontSize: 11, letterSpacing: 1 },
+  viewPillTextActive: { color: '#fff' },
+  emptyDiagram: {
+    color: theme.colors.textSecondary,
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: theme.spacing.sm,
+  },
 });

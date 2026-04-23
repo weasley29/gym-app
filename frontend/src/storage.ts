@@ -255,3 +255,25 @@ export async function lastTrainedDayForMuscle(
   }
   return null;
 }
+
+// Given a list of sets, return which muscles were trained — split by role.
+// A muscle appears in `primary` if ANY exercise in the list targeted it primarily;
+// otherwise it appears in `secondary` if it was hit as a secondary muscle.
+export async function musclesTrained(
+  sets: LoggedSet[]
+): Promise<{ primary: MuscleId[]; secondary: MuscleId[] }> {
+  const primarySet = new Set<string>();
+  const secondarySet = new Set<string>();
+  for (const s of sets) {
+    const ex = await findExerciseById(s.exerciseId);
+    if (!ex) continue;
+    for (const m of ex.primary) primarySet.add(m);
+    for (const m of ex.secondary) secondarySet.add(m);
+  }
+  // If a muscle is in both, prefer primary.
+  for (const m of primarySet) secondarySet.delete(m);
+  return {
+    primary: Array.from(primarySet) as MuscleId[],
+    secondary: Array.from(secondarySet) as MuscleId[],
+  };
+}

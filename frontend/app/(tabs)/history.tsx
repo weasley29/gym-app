@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -16,12 +16,15 @@ import {
   getAllSets,
   getSettings,
   LoggedSet,
+  musclesTrained,
   sameDay,
   Settings,
   toDisplay,
 } from '../../src/storage';
+import { MuscleId } from '../../src/muscles';
 import { theme } from '../../src/theme';
 import { tap, warn } from '../../src/haptics';
+import MuscleDiagram from '../../src/MuscleDiagram';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -30,6 +33,11 @@ export default function HistoryScreen() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [cursor, setCursor] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(new Date());
+  const [dayMuscles, setDayMuscles] = useState<{ primary: MuscleId[]; secondary: MuscleId[] }>({
+    primary: [],
+    secondary: [],
+  });
+  const [dayView, setDayView] = useState<'front' | 'back'>('front');
 
   const load = useCallback(async () => {
     const [s, st] = await Promise.all([getAllSets(), getSettings()]);
@@ -68,6 +76,22 @@ export default function HistoryScreen() {
       .filter((s) => sameDay(new Date(s.date), selectedDay))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [sets, selectedDay]);
+
+  // Recompute trained muscles whenever the selection or sets change.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (selectedSets.length === 0) {
+        setDayMuscles({ primary: [], secondary: [] });
+        return;
+      }
+      const r = await musclesTrained(selectedSets);
+      if (!cancelled) setDayMuscles(r);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSets]);
 
   const monthLabel = cursor.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
 
@@ -178,6 +202,54 @@ export default function HistoryScreen() {
                 day: 'numeric',
               }).toUpperCase()}
             </Text>
+            {selectedSets.length > 0 && (
+              <View style={styles.diagramCard}>
+                <View style={styles.viewToggle}>
+                  <TouchableOpacity
+                    testID="history-view-front"
+                    style={[styles.viewPill, dayView === 'front' && styles.viewPillActive]}
+                    onPress={() => {
+                      tap();
+                      setDayView('front');
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.viewPillText,
+                        dayView === 'front' && styles.viewPillTextActive,
+                      ]}
+                    >
+                      FRONT
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    testID="history-view-back"
+                    style={[styles.viewPill, dayView === 'back' && styles.viewPillActive]}
+                    onPress={() => {
+                      tap();
+                      setDayView('back');
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.viewPillText,
+                        dayView === 'back' && styles.viewPillTextActive,
+                      ]}
+                    >
+                      BACK
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <MuscleDiagram
+                  view={dayView}
+                  bodyType={settings?.bodyType || 'female'}
+                  primary={dayMuscles.primary}
+                  secondary={dayMuscles.secondary}
+                  width={200}
+                  height={380}
+                />
+              </View>
+            )}
             {selectedSets.length === 0 ? (
               <Text style={styles.emptyText}>No workouts logged.</Text>
             ) : (
@@ -293,4 +365,25 @@ const styles = StyleSheet.create({
   setDetail: { color: theme.colors.textSecondary, fontSize: 13, marginTop: 2 },
   setNotes: { color: theme.colors.textSecondary, fontSize: 12, fontStyle: 'italic', marginTop: 4 },
   delBtn: { padding: 6 },
+  diagramCard: {
+    backgroundColor: theme.colors.surface,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.lg,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+    alignItems: 'center',
+  },
+  viewToggle: { flexDirection: 'row', gap: 8, marginBottom: theme.spacing.md },
+  viewPill: {
+    paddingHorizontal: 18,
+    paddingVertical: 8,
+    borderRadius: theme.radius.sm,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    backgroundColor: theme.colors.background,
+  },
+  viewPillActive: { backgroundColor: theme.colors.primary, borderColor: theme.colors.primary },
+  viewPillText: { color: theme.colors.textPrimary, fontWeight: '800', fontSize: 11, letterSpacing: 1 },
+  viewPillTextActive: { color: '#fff' },
 });
